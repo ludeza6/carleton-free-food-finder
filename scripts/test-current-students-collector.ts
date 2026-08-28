@@ -1,23 +1,23 @@
 import { collectCurrentStudentsEvents } from "../collectors/carleton/current-students";
-import { isLikelyFoodEvent } from "../collectors/food-detector";
+import { classifyFoodEvent } from "../collectors/food-detector";
 
 async function main() {
   const events = await collectCurrentStudentsEvents();
 
-  const foodEvents = events.filter(isLikelyFoodEvent);
+  console.log(`Collected ${events.length} total events\n`);
 
-  console.log(`Collected ${events.length} total events`);
-  console.log(`Detected ${foodEvents.length} likely food events`);
+  for (const event of events) {
+    const classification = classifyFoodEvent(event);
 
-  console.log(
-    foodEvents.map((event) => ({
-      title: event.title,
-      startTime: event.startTime,
-      building: event.building,
-      room: event.room,
-      sourceUrl: event.sourceUrl,
-    })),
-  );
+    if (classification.hasFood) {
+      console.log({
+        title: event.title,
+        foodType: classification.foodType,
+        isFree: classification.isFree,
+        confidence: classification.confidence,
+      });
+    }
+  }
 }
 
 main().catch((error) => {
