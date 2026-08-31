@@ -25,6 +25,7 @@ export async function GET() {
       confidence
       `,
     )
+    .gte("start_time", new Date().toISOString())
     .order("start_time", { ascending: true });
 
   if (error) {

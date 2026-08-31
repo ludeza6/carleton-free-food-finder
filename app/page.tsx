@@ -5,6 +5,8 @@ import EventList from "@/components/events/EventList";
 import ReportForm from "@/components/reports/ReportForm";
 import ReportCard from "@/components/reports/ReportCard";
 import { FoodReport } from "@/types/report";
+import NotificationButton from "@/components/notifications/NotificationButton";
+import FoodNotificationWatcher from "@/components/notifications/FoodNotificationWatcher";
 
 async function FoodEvents() {
   const supabase = await createClient();
@@ -78,6 +80,12 @@ async function CommunityReports() {
 export default function Home() {
   return (
     <main className="p-8">
+      <FoodNotificationWatcher />
+
+      <div className="mt-4">
+        <NotificationButton />
+      </div>
+
       <h1 className="text-3xl font-bold">CF3</h1>
       <p className="mt-2">Carleton Free Food Finder</p>
 
