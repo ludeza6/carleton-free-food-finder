@@ -29,10 +29,17 @@ type CarletonFeedEvent = {
   url: string;
   type: string;
   tags_event_type: string[];
-  location: string;
+  location?: string | null;
 };
 
-function parseLocation(location: string) {
+function parseLocation(location?: string | null) {
+  if (!location) {
+    return {
+      building: null,
+      room: null,
+    };
+  }
+
   const [buildingPart, roomPart] = location.split(" - ");
 
   const building = buildingPart?.trim() || null;
