@@ -2,16 +2,21 @@ import { collectCurrentStudentsEvents } from "../collectors/carleton/current-stu
 import { classifyFoodEvent } from "../collectors/food-detector";
 
 async function main() {
-  const events = await collectCurrentStudentsEvents();
+  const events =
+    await collectCurrentStudentsEvents();
 
-  console.log(`Collected ${events.length} total events\n`);
+  console.log(
+    `Collected ${events.length} total events\n`,
+  );
 
   for (const event of events) {
-    const classification = classifyFoodEvent(event);
+    const classification =
+      classifyFoodEvent(event);
 
     if (classification.hasFood) {
       console.log({
         title: event.title,
+        source: event.sourceName,
         foodType: classification.foodType,
         isFree: classification.isFree,
         confidence: classification.confidence,

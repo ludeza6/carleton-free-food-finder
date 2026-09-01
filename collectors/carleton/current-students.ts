@@ -1,7 +1,24 @@
 import { CollectedEvent } from "../types";
 
-const EVENTS_FEED_URL =
-  "https://students.carleton.ca/wp-json/stu-api/v2/event-calendar-feed/";
+type FeedSource = {
+  url: string;
+  sourceName: string;
+};
+
+const EVENT_FEEDS: FeedSource[] = [
+  {
+    url: "https://students.carleton.ca/wp-json/stu-api/v2/event-calendar-feed/",
+    sourceName: "Carleton Current Students",
+  },
+  {
+    url: "https://students.carleton.ca/wp-json/stu-api/v2/event-calendar-varsity/",
+    sourceName: "Carleton Varsity",
+  },
+  {
+    url: "https://students.carleton.ca/wp-json/stu-api/v2/event-calendar-academics/",
+    sourceName: "Carleton Academics",
+  },
+];
 
 type CarletonFeedEvent = {
   id: number;
@@ -27,21 +44,23 @@ function parseLocation(location: string) {
   };
 }
 
-export async function collectCurrentStudentsEvents(): Promise<
-  CollectedEvent[]
-> {
-  const response = await fetch(EVENTS_FEED_URL);
+async function fetchFeed(
+  feed: FeedSource,
+): Promise<CollectedEvent[]> {
+  const response = await fetch(feed.url);
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch Current Students event feed: ${response.status}`,
+      `Failed to fetch ${feed.sourceName} feed: ${response.status}`,
     );
   }
 
-  const data = (await response.json()) as CarletonFeedEvent[];
+  const data =
+    (await response.json()) as CarletonFeedEvent[];
 
   return data.map((event) => {
-    const { building, room } = parseLocation(event.location);
+    const { building, room } =
+      parseLocation(event.location);
 
     return {
       title: event.title,
@@ -50,8 +69,29 @@ export async function collectCurrentStudentsEvents(): Promise<
       endTime: event.end || null,
       building,
       room,
-      sourceName: "Carleton Current Students",
+      sourceName: feed.sourceName,
       sourceUrl: event.url,
     };
   });
+}
+
+export async function collectCurrentStudentsEvents(): Promise<
+  CollectedEvent[]
+> {
+  const results = await Promise.all(
+    EVENT_FEEDS.map((feed) => fetchFeed(feed)),
+  );
+
+  const allEvents = results.flat();
+
+  const uniqueEvents = Array.from(
+    new Map(
+      allEvents.map((event) => [
+        event.sourceUrl,
+        event,
+      ]),
+    ).values(),
+  );
+
+  return uniqueEvents;
 }
