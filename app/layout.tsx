@@ -9,8 +9,45 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+
+  title: {
+    default: "CF3 — Carleton Free Food Finder",
+    template: "%s | CF3",
+  },
+
+  description:
+    "A real-time free food finder for Carleton University students, powered by official event feeds and community reports.",
+
+  applicationName: "CF3",
+
+  keywords: [
+    "Carleton University",
+    "free food",
+    "student events",
+    "campus food",
+    "Ottawa",
+    "CF3",
+  ],
+
+  authors: [
+    {
+      name: "Lucas De la Cruz Zanabria",
+    },
+  ],
+
+  openGraph: {
+    title: "CF3 — Carleton Free Food Finder",
+    description:
+      "Find free food on campus from official Carleton events and real-time community reports.",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary",
+    title: "CF3 — Carleton Free Food Finder",
+    description:
+      "Find free food on campus from official Carleton events and real-time community reports.",
+  },
 };
 
 const geistSans = Geist({
@@ -29,7 +66,7 @@ export default function RootLayout({
       <body className={`${geistSans.className} antialiased`}>
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
         >
