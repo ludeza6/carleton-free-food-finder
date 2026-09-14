@@ -20,6 +20,10 @@ const EVENT_FEEDS: FeedSource[] = [
   },
 ];
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2_000;
+const REQUEST_TIMEOUT_MS = 15_000;
+
 type CarletonFeedEvent = {
   id: number;
   title: string;
@@ -42,32 +46,74 @@ function parseLocation(location?: string | null) {
 
   const [buildingPart, roomPart] = location.split(" - ");
 
-  const building = buildingPart?.trim() || null;
-  const room = roomPart?.trim() || null;
-
   return {
-    building,
-    room,
+    building: buildingPart?.trim() || null,
+    room: roomPart?.trim() || null,
   };
+}
+
+function sleep(milliseconds: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+async function fetchWithRetry(
+  feed: FeedSource,
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(feed.url, {
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        headers: {
+          "User-Agent": "CF3-Carleton-Free-Food-Finder/1.0",
+          Accept: "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `${feed.sourceName} returned HTTP ${response.status}`,
+        );
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error;
+
+      console.warn(
+        `Failed to fetch ${feed.sourceName} ` +
+          `(attempt ${attempt}/${MAX_RETRIES})`,
+      );
+
+      if (attempt < MAX_RETRIES) {
+        await sleep(RETRY_DELAY_MS * attempt);
+      }
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Failed to fetch ${feed.sourceName}`);
 }
 
 async function fetchFeed(
   feed: FeedSource,
 ): Promise<CollectedEvent[]> {
-  const response = await fetch(feed.url);
+  const response = await fetchWithRetry(feed);
 
-  if (!response.ok) {
+  const data = (await response.json()) as CarletonFeedEvent[];
+
+  if (!Array.isArray(data)) {
     throw new Error(
-      `Failed to fetch ${feed.sourceName} feed: ${response.status}`,
+      `${feed.sourceName} returned an unexpected response`,
     );
   }
 
-  const data =
-    (await response.json()) as CarletonFeedEvent[];
-
   return data.map((event) => {
-    const { building, room } =
-      parseLocation(event.location);
+    const { building, room } = parseLocation(event.location);
 
     return {
       title: event.title,
@@ -85,15 +131,38 @@ async function fetchFeed(
 export async function collectCurrentStudentsEvents(): Promise<
   CollectedEvent[]
 > {
-  const results = await Promise.all(
+  const results = await Promise.allSettled(
     EVENT_FEEDS.map((feed) => fetchFeed(feed)),
   );
 
-  const allEvents = results.flat();
+  const successfulEvents: CollectedEvent[] = [];
+
+  results.forEach((result, index) => {
+    const feed = EVENT_FEEDS[index];
+
+    if (result.status === "fulfilled") {
+      console.log(
+        `${feed.sourceName}: collected ${result.value.length} events`,
+      );
+
+      successfulEvents.push(...result.value);
+    } else {
+      console.error(
+        `${feed.sourceName}: unavailable after retries`,
+        result.reason,
+      );
+    }
+  });
+
+  if (successfulEvents.length === 0) {
+    throw new Error(
+      "All Carleton event feeds failed. No ingestion performed.",
+    );
+  }
 
   const uniqueEvents = Array.from(
     new Map(
-      allEvents.map((event) => [
+      successfulEvents.map((event) => [
         event.sourceUrl,
         event,
       ]),
