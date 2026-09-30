@@ -1,9 +1,9 @@
-import { collectCurrentStudentsEvents } from "./current-students";
+import { collectAllCarletonEvents } from "./collect-all";
 import { classifyFoodEvent } from "../food-detector";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function ingestCurrentStudentsFoodEvents() {
-  const events = await collectCurrentStudentsEvents();
+export async function ingestCarletonFoodEvents() {
+  const events = await collectAllCarletonEvents();
 
   const classifiedEvents = events.map((event) => ({
     event,
@@ -68,3 +68,6 @@ export async function ingestCurrentStudentsFoodEvents() {
     events: data ?? [],
   };
 }
+
+// Compatibility alias for existing scripts and callers.
+export const ingestCurrentStudentsFoodEvents = ingestCarletonFoodEvents;

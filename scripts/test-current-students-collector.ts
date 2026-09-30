@@ -1,9 +1,9 @@
-import { collectCurrentStudentsEvents } from "../collectors/carleton/current-students";
+import { collectAllCarletonEvents } from "../collectors/carleton/collect-all";
 import { classifyFoodEvent } from "../collectors/food-detector";
 
 async function main() {
   const events =
-    await collectCurrentStudentsEvents();
+    await collectAllCarletonEvents();
 
   console.log(
     `Collected ${events.length} total events\n`,

@@ -2,10 +2,10 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local" });
 
-import { ingestCurrentStudentsFoodEvents } from "../collectors/carleton/ingest";
+import { ingestCarletonFoodEvents } from "../collectors/carleton/ingest";
 
 async function main() {
-  const result = await ingestCurrentStudentsFoodEvents();
+  const result = await ingestCarletonFoodEvents();
 
   console.log("\nIngestion complete");
   console.log("------------------");

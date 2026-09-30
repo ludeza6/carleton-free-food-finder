@@ -8,3 +8,8 @@ export type CollectedEvent = {
   sourceName: string;
   sourceUrl: string;
 };
+
+export type EventSource = {
+  name: string;
+  collect(): Promise<CollectedEvent[]>;
+};

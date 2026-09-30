@@ -200,8 +200,12 @@ app/
 
 collectors/
 ├── carleton/
-│   ├── current-students.ts
+│   ├── sources/
+│   │   └── current-students.ts
+│   ├── collect-all.ts
+│   ├── current-students.ts (compatibility entry point)
 │   └── ingest.ts
+├── deduplication.ts
 ├── food-detector.ts
 └── types.ts
 
@@ -247,6 +251,26 @@ Open:
 
 http://localhost:3000
 Event Collector
+
+Each configured source implements `EventSource` (`name` and `collect()`).
+The three existing feeds are defined in `carleton/sources/current-students.ts`.
+`carleton/collect-all.ts` runs them independently with `Promise.allSettled`,
+logs each outcome, and merges successful results. Empty successful feeds are
+valid; the run fails only when every configured source fails.
+
+Collection retains three attempts, a 15-second timeout per request, and
+2-second / 4-second retry delays. Results are deduplicated by exact `sourceUrl`,
+with the last configured source winning. `createEventFingerprint` normalizes
+title, start time, and building for future matching; it does not deduplicate
+records today. Database upserts still use the existing `source_url` constraint.
+
+To add a source later, implement `EventSource` and register it in
+`carletonSources`. Ingestion and deterministic food classification stay shared.
+The legacy collector and ingestion exports remain available for compatibility.
+
+Run offline collector unit tests:
+
+npm run collector:unit
 
 Test collection without storing events:
 

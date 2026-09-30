@@ -5,6 +5,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "collector:unit": "tsx --test collectors/carleton/collectors.test.ts",
     "collector:test": "tsx scripts/test-current-students-collector.ts",
     "collector:ingest": "tsx scripts/ingest-current-students.ts"
   },
