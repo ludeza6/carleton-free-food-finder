@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   const supabase = await createClient();
+  const now = new Date();
+  // Match the notification watcher: assume two hours when no end time exists.
+  const fallbackStart = new Date(now.getTime() - 2 * 60 * 60 * 1000);
 
   const { data: events, error } = await supabase
     .from("food_events")
@@ -25,7 +28,9 @@ export async function GET() {
       confidence
       `,
     )
-    .gte("start_time", new Date().toISOString())
+    .or(
+      `start_time.gte.${now.toISOString()},end_time.gte.${now.toISOString()},and(end_time.is.null,start_time.gte.${fallbackStart.toISOString()})`,
+    )
     .order("start_time", { ascending: true });
 
   if (error) {

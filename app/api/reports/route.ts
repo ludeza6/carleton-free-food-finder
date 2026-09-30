@@ -24,13 +24,42 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-  const building = body.building?.trim();
-  const room = body.room?.trim() || null;
-  const foodType = body.food_type?.trim();
-  const quantity = body.quantity;
-  const notes = body.notes?.trim() || null;
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid report body" }, { status: 400 });
+  }
+
+  const input = body as Record<string, unknown>;
+  const limits = { building: 120, room: 80, food_type: 120, notes: 1000 };
+
+  for (const [field, maxLength] of Object.entries(limits)) {
+    const value = input[field];
+    if (value == null) continue;
+    if (typeof value !== "string") {
+      return NextResponse.json(
+        { error: `${field} must be a string` },
+        { status: 400 },
+      );
+    }
+    if (value.trim().length > maxLength) {
+      return NextResponse.json(
+        { error: `${field} must be at most ${maxLength} characters` },
+        { status: 400 },
+      );
+    }
+  }
+
+  const building = (input.building as string | null | undefined)?.trim();
+  const room = (input.room as string | null | undefined)?.trim() || null;
+  const foodType = (input.food_type as string | null | undefined)?.trim();
+  const quantity = typeof input.quantity === "string" ? input.quantity.trim() : "";
+  const notes = (input.notes as string | null | undefined)?.trim() || null;
 
   if (!building || !foodType) {
     return NextResponse.json(

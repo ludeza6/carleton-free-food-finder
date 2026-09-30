@@ -13,17 +13,27 @@ export async function POST(
 
   const reportId = Number(id);
 
-  if (!Number.isInteger(reportId)) {
+  if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(reportId)) {
     return NextResponse.json(
       { error: "Invalid report ID" },
       { status: 400 },
     );
   }
 
-  const body = await request.json();
-  const vote = body.vote;
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-  if (!VALID_VOTES.includes(vote)) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid confirmation body" }, { status: 400 });
+  }
+
+  const vote = (body as Record<string, unknown>).vote;
+
+  if (typeof vote !== "string" || !VALID_VOTES.includes(vote)) {
     return NextResponse.json(
       { error: "Invalid confirmation type" },
       { status: 400 },
@@ -64,37 +74,39 @@ export async function POST(
     );
   }
 
+  // TODO: Increment counts atomically in the database to avoid lost concurrent votes.
+  // The active check and status decision should be part of the same transaction.
   const nextGoneCount =
-  vote === "gone"
-    ? report.gone_count + 1
-    : report.gone_count;
+    vote === "gone"
+      ? report.gone_count + 1
+      : report.gone_count;
 
-const nextStillHereCount =
-  vote === "still_here"
-    ? report.still_here_count + 1
-    : report.still_here_count;
+  const nextStillHereCount =
+    vote === "still_here"
+      ? report.still_here_count + 1
+      : report.still_here_count;
 
-const shouldMarkGone =
-  nextGoneCount >= 3 &&
-  nextGoneCount > nextStillHereCount;
+  const shouldMarkGone =
+    nextGoneCount >= 3 &&
+    nextGoneCount > nextStillHereCount;
 
-const updates: {
-  still_here_count: number;
-  gone_count: number;
-  status: string;
-  last_confirmed_at?: string;
-} = {
-  still_here_count: nextStillHereCount,
-  gone_count: nextGoneCount,
-  status: shouldMarkGone
-    ? "gone"
-    : report.status,
-};
+  const updates: {
+    still_here_count: number;
+    gone_count: number;
+    status: string;
+    last_confirmed_at?: string;
+  } = {
+    still_here_count: nextStillHereCount,
+    gone_count: nextGoneCount,
+    status: shouldMarkGone
+      ? "gone"
+      : report.status,
+  };
 
-if (vote === "still_here") {
-  updates.last_confirmed_at =
-    new Date().toISOString();
-}
+  if (vote === "still_here") {
+    updates.last_confirmed_at =
+      new Date().toISOString();
+  }
 
   const { data, error } = await supabase
     .from("food_reports")

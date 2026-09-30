@@ -60,17 +60,17 @@ export default function FoodNotificationWatcher() {
 
       const now = Date.now();
 
-const events = allEvents.filter((event) => {
-  const start = new Date(
-    event.start_time,
-  ).getTime();
+      const events = allEvents.filter((event) => {
+        const start = new Date(
+          event.start_time,
+        ).getTime();
 
-  const end = event.end_time
-    ? new Date(event.end_time).getTime()
-    : start + 2 * 60 * 60 * 1000;
+        const end = event.end_time
+          ? new Date(event.end_time).getTime()
+          : start + 2 * 60 * 60 * 1000;
 
-  return end >= now;
-});
+        return end >= now;
+      });
 
       const reports =
         (await reportsResponse.json()) as ReportItem[];
@@ -84,41 +84,41 @@ const events = allEvents.filter((event) => {
       );
 
       const storedEventIds = getStoredIds(
-  "cf3-known-event-ids",
-);
+        "cf3-known-event-ids",
+      );
 
-const storedReportIds = getStoredIds(
-  "cf3-known-report-ids",
-);
+      const storedReportIds = getStoredIds(
+        "cf3-known-report-ids",
+      );
 
       if (!initialized.current) {
-  const hasStoredState =
-    localStorage.getItem(
-      "cf3-notifications-initialized",
-    ) === "true";
+        const hasStoredState =
+          localStorage.getItem(
+            "cf3-notifications-initialized",
+          ) === "true";
 
-  if (!hasStoredState) {
-    localStorage.setItem(
-      "cf3-known-event-ids",
-      JSON.stringify(currentEventIds),
-    );
+        if (!hasStoredState) {
+          localStorage.setItem(
+            "cf3-known-event-ids",
+            JSON.stringify(currentEventIds),
+          );
 
-    localStorage.setItem(
-      "cf3-known-report-ids",
-      JSON.stringify(currentReportIds),
-    );
+          localStorage.setItem(
+            "cf3-known-report-ids",
+            JSON.stringify(currentReportIds),
+          );
 
-    localStorage.setItem(
-      "cf3-notifications-initialized",
-      "true",
-    );
+          localStorage.setItem(
+            "cf3-notifications-initialized",
+            "true",
+          );
 
-    initialized.current = true;
-    return;
-  }
+          initialized.current = true;
+          return;
+        }
 
-  initialized.current = true;
-}
+        initialized.current = true;
+      }
 
       const newEvents = events.filter(
         (event) =>
@@ -148,12 +148,12 @@ const storedReportIds = getStoredIds(
             },
           );
         }
-        
+
       }
 
       if (newEvents.length > 0 || newReports.length > 0) {
-  router.refresh();
-}
+        router.refresh();
+      }
 
       localStorage.setItem(
         "cf3-known-event-ids",
@@ -173,17 +173,17 @@ const storedReportIds = getStoredIds(
   }, [router]);
 
   useEffect(() => {
-  checkForFood();
+    checkForFood();
 
-  const interval = window.setInterval(
-    checkForFood,
-    POLL_INTERVAL,
-  );
+    const interval = window.setInterval(
+      checkForFood,
+      POLL_INTERVAL,
+    );
 
-  return () => {
-    window.clearInterval(interval);
-  };
-}, [checkForFood]);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [checkForFood]);
 
   return null;
 }
