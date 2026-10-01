@@ -1,0 +1,59 @@
+{
+  "pagination": {
+    "total": 1,
+    "per_page": -1,
+    "current_page": 1,
+    "total_pages": 0
+  },
+  "posts": [
+    {
+      "id": 36840,
+      "title": "Campus to Community \u2013 Post Panda Cleanup",
+      "link": "https://carleton.ca/seo/event/campus-to-community-post-panda-cleanup/",
+      "cu_event_start_date": "2026-10-05 09:00:00",
+      "cu_event_end_date": "2026-10-05 12:00:00",
+      "cu_event_location_type": {
+        "value": "in-person",
+        "label": "In-Person"
+      },
+      "cu_event_meeting_address_type": {
+        "value": "off-campus",
+        "label": "Off Campus"
+      },
+      "cu_building": null,
+      "cu_event_meeting_room": null,
+      "cu_event_meeting_address_full": {
+        "address": "1005 Bank St, Ottawa, ON K1S 3W7, Canada",
+        "lat": 45.39795939235879,
+        "lng": -75.68527243391277,
+        "zoom": 18,
+        "place_id": "ChIJ07cso8EFzkwRgqIIbveUsKo",
+        "street_number": "1005",
+        "street_name": "Bank Street",
+        "street_name_short": "Bank St",
+        "city": "Ottawa",
+        "state": "Ontario",
+        "state_short": "ON",
+        "post_code": "K1S 3W7",
+        "country": "Canada",
+        "country_short": "CA"
+      },
+      "cu_event_meeting_address_street": null,
+      "cu_event_meeting_address_city": null,
+      "cu_event_meeting_address_country": null,
+      "cu_event_virtual_type": null,
+      "cu_event_virtual_meeting_link": null,
+      "cu_event_cost": "Free",
+      "cu_event_registration": {
+        "title": "",
+        "url": "https://sarms.carleton.ca/csl/apply",
+        "target": ""
+      },
+      "cu_event_secondary_button": "",
+      "cu_event_contact_name": "",
+      "cu_event_email": "",
+      "cu_event_phone": "",
+      "cu_post_thumbnail": ""
+    }
+  ]
+}

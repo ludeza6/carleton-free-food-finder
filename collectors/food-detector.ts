@@ -1,4 +1,4 @@
-import { CollectedEvent } from "./types";
+import type { CollectedEvent } from "./types";
 
 export type FoodClassification = {
   hasFood: boolean;
@@ -7,187 +7,84 @@ export type FoodClassification = {
   confidence: number;
 };
 
-const FREE_PHRASES = [
-  "free food",
-  "free lunch",
-  "free dinner",
-  "free breakfast",
-  "free pizza",
-  "free snacks",
-  "free refreshments",
-
-  "food provided",
-  "food will be provided",
-
-  "lunch provided",
-  "lunch will be provided",
-
-  "dinner provided",
-  "dinner will be provided",
-
-  "breakfast provided",
-  "breakfast will be provided",
-
-  "refreshments provided",
-  "refreshments will be provided",
-
-  "snacks provided",
-  "snacks will be provided",
-
-  "pizza provided",
-  "pizza will be provided",
-
-  "complimentary food",
-  "complimentary lunch",
-  "complimentary dinner",
-  "complimentary breakfast",
-  "complimentary refreshments",
-  "complimentary snacks",
+// Specific foods precede meal names: a pizza dinner should be Pizza.
+const FOOD_TYPES = [
+  { label: "Pizza", pattern: /\bpizza\b/ },
+  { label: "BBQ", pattern: /\b(?:bbq|barbecue|barbeque)\b/ },
+  { label: "Coffee", pattern: /\bcoffee\b/ },
+  { label: "Pastries", pattern: /\b(?:pastries|pastry)\b/ },
+  { label: "Lunch", pattern: /\blunch\b/ },
+  { label: "Dinner", pattern: /\bdinner\b/ },
+  { label: "Breakfast", pattern: /\bbreakfast\b/ },
+  { label: "Snacks", pattern: /\bsnacks?\b/ },
+  { label: "Refreshments", pattern: /\brefreshments?\b/ },
+  { label: "Meal", pattern: /\bmeals?\b/ },
+  { label: "Drinks", pattern: /\b(?:drinks?|beverages?|pop|tea)\b/ },
 ];
 
-const PAID_PHRASES = [
-  "available for purchase",
-  "food for purchase",
-  "purchase food",
-  "food vendors",
-  "for sale",
-  "bring your own lunch",
-  "bring your own food",
+const FOOD = "(?:food|meals?|pizza|bbq|barbecue|barbeque|lunch|dinner|breakfast|coffee|tea|snacks?|refreshments?|pastries|pastry|drinks?|beverages?|pop)";
+const FOOD_ITEM = `${FOOD}(?: (?:lunch|dinner|meal))?`;
+const FOOD_LIST = `${FOOD_ITEM}(?:(?:,? (?:and|&) |, )${FOOD_ITEM})*`;
+const FREE_PATTERNS = [
+  // A hyphen before free usually indicates a dietary claim, e.g. gluten-free.
+  new RegExp(`(?<![\\w-])(?:free|complimentary) ${FOOD_LIST}\\b`, "g"),
+  new RegExp(`\\b${FOOD_LIST} (?:will be |is |are )?(?:provided|included)\\b`, "g"),
+  // Common university hospitality shorthand, even without "provided".
+  /\bsnacks? (?:and|&) refreshments?\b/g,
 ];
+const FOOD_KEYWORD = new RegExp(`\\b${FOOD}\\b`);
 
-const FOOD_TYPES: Array<{
-  label: string;
-  keywords: string[];
-}> = [
-  {
-    label: "Pizza",
-    keywords: ["pizza"],
-  },
-  {
-    label: "BBQ",
-    keywords: ["bbq", "barbecue"],
-  },
-  {
-    label: "Lunch",
-    keywords: ["lunch"],
-  },
-  {
-    label: "Dinner",
-    keywords: ["dinner"],
-  },
-  {
-    label: "Breakfast",
-    keywords: ["breakfast"],
-  },
-  {
-    label: "Coffee",
-    keywords: ["coffee"],
-  },
-  {
-    label: "Snacks",
-    keywords: ["snacks", "snack"],
-  },
-  {
-    label: "Refreshments",
-    keywords: ["refreshments", "refreshment"],
-  },
-  {
-    label: "Pastries",
-    keywords: ["pastries", "pastry"],
-  },
-];
-
-const GENERIC_FOOD_KEYWORDS = [
-  "food",
-  "meal",
-  "pizza",
-  "bbq",
-  "barbecue",
-  "lunch",
-  "dinner",
-  "breakfast",
-  "coffee",
-  "snack",
-  "snacks",
-  "refreshments",
-  "pastries",
-];
-
-function getEventText(event: CollectedEvent) {
-  return [
-    event.title,
-    event.description ?? "",
-  ]
-    .join(" ")
-    .toLowerCase();
-}
+// Preserve conservative precedence, including mixed free and paid offerings.
+const PAID_PATTERN = /\b(?:available for purchase|food for purchase|purchase food|food vendors|for sale|bring your own (?:lunch|food)|(?:food|meals?|pizza|lunch|dinner|breakfast|snacks?|refreshments?|drinks?|beverages?) (?:are |is )?(?:for purchase|sold separately|not included)|(?:food|meals?|pizza|lunch|dinner|breakfast) (?:costs?|at an additional cost))\b/;
 
 function detectFoodType(text: string) {
-  for (const food of FOOD_TYPES) {
-    if (food.keywords.some((keyword) => text.includes(keyword))) {
-      return food.label;
-    }
-  }
-
-  return null;
+  return FOOD_TYPES.find((food) => food.pattern.test(text))?.label ?? null;
 }
 
-export function classifyFoodEvent(
-  event: CollectedEvent,
-): FoodClassification {
-  const text = getEventText(event);
-
-  const hasPaidPhrase = PAID_PHRASES.some((phrase) =>
-    text.includes(phrase),
+function getFreeEvidence(text: string) {
+  return FREE_PATTERNS.flatMap((pattern) =>
+    [...text.matchAll(pattern)]
+      .filter((match) => {
+        const before = text.slice(0, match.index);
+        const after = text.slice(match.index + match[0].length);
+        return !/\b(?:no|not|without) (?:\w+ ){0,2}$/.test(before)
+          && !/^ (?:will not be|(?:is|are) not|not)\b/.test(after)
+          && !/^ (?:at (?:an? )?(?:additional )?(?:cost|charge)|for (?:purchase|a fee)|for \$|\$)/.test(after);
+      })
+      .map((match) => match[0]),
   );
+}
 
-  if (hasPaidPhrase) {
-    return {
-      hasFood: true,
-      isFree: false,
-      foodType: detectFoodType(text),
-      confidence: 0.95,
-    };
-  }
-
-  const hasFreePhrase = FREE_PHRASES.some((phrase) =>
-    text.includes(phrase),
+export function classifyFoodEvent(event: CollectedEvent): FoodClassification {
+  // Keep fields separate so a title ending in "free" cannot modify the description.
+  const fields = [event.title, event.description ?? ""].map((text) =>
+    text.toLowerCase().replace(/[\u2010-\u2015]/g, "-").replace(/\s+/g, " ").trim(),
   );
-
-  const hasFoodKeyword = GENERIC_FOOD_KEYWORDS.some((keyword) =>
-    text.includes(keyword),
-  );
-
+  const text = fields.join(". ");
   const foodType = detectFoodType(text);
 
-  if (hasFreePhrase) {
+  if (fields.some((field) => PAID_PATTERN.test(field))) {
+    return { hasFood: true, isFree: false, foodType, confidence: 0.95 };
+  }
+
+  const evidence = fields.flatMap(getFreeEvidence);
+  if (evidence.length > 0) {
     return {
       hasFood: true,
       isFree: true,
-      foodType,
+      foodType: detectFoodType(evidence.join(". ")) ?? foodType,
       confidence: 0.95,
     };
   }
 
-  if (hasFoodKeyword) {
-    return {
-      hasFood: true,
-      isFree: false,
-      foodType,
-      confidence: 0.6,
-    };
+  if (FOOD_KEYWORD.test(text)) {
+    return { hasFood: true, isFree: false, foodType, confidence: 0.6 };
   }
 
-  return {
-    hasFood: false,
-    isFree: false,
-    foodType: null,
-    confidence: 1,
-  };
+  return { hasFood: false, isFree: false, foodType: null, confidence: 1 };
 }
 
 export function isLikelyFoodEvent(event: CollectedEvent) {
   const result = classifyFoodEvent(event);
-
   return result.hasFood && result.isFree;
 }

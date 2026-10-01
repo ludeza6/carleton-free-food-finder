@@ -1,0 +1,77 @@
+{
+  "pagination": {
+    "total": 2,
+    "per_page": -1,
+    "current_page": 1,
+    "total_pages": 0
+  },
+  "posts": [
+    {
+      "id": 44923,
+      "title": "All About Post-Graduation Work Permits",
+      "link": "https://carleton.ca/go-isso/event/all-about-post-graduation-work-permits-11/",
+      "cu_event_start_date": "2026-10-13 11:00:00",
+      "cu_event_end_date": "2026-10-13 12:00:00",
+      "cu_event_location_type": {
+        "value": "virtual",
+        "label": "Virtual"
+      },
+      "cu_event_meeting_address_type": null,
+      "cu_building": null,
+      "cu_event_meeting_room": null,
+      "cu_event_meeting_address_full": null,
+      "cu_event_meeting_address_street": null,
+      "cu_event_meeting_address_city": null,
+      "cu_event_meeting_address_country": null,
+      "cu_event_virtual_type": {
+        "value": "teams",
+        "label": "Teams"
+      },
+      "cu_event_virtual_meeting_link": "https://teams.microsoft.com/meet/296318680482313?p=UnlwJquwz4hP5Qd3zx",
+      "cu_event_cost": "free",
+      "cu_event_registration": {
+        "title": "",
+        "url": "https://360.carleton.ca/urd/sits.urd/run/siw_ipp_lgn.login?process=siw_ipp_enq&code1=CSAS&code2=&code4=IPR_UDFA=EVT;IPR_UDFB=X26101311000;",
+        "target": ""
+      },
+      "cu_event_secondary_button": "",
+      "cu_event_contact_name": "",
+      "cu_event_email": "isso@carleton.ca",
+      "cu_event_phone": "",
+      "cu_post_thumbnail": ""
+    },
+    {
+      "id": 44095,
+      "title": "Global Caf\u00e9",
+      "link": "https://carleton.ca/go-isso/event/global-cafe-26/",
+      "cu_event_start_date": "2026-10-13 13:30:00",
+      "cu_event_end_date": "2026-10-13 15:30:00",
+      "cu_event_location_type": {
+        "value": "in-person",
+        "label": "In-Person"
+      },
+      "cu_event_meeting_address_type": {
+        "value": "on-campus",
+        "label": "On Campus"
+      },
+      "cu_building": {
+        "value": "ML",
+        "label": "MacOdrum Library"
+      },
+      "cu_event_meeting_room": "TBD",
+      "cu_event_meeting_address_full": null,
+      "cu_event_meeting_address_street": null,
+      "cu_event_meeting_address_city": null,
+      "cu_event_meeting_address_country": null,
+      "cu_event_virtual_type": null,
+      "cu_event_virtual_meeting_link": null,
+      "cu_event_cost": "Free",
+      "cu_event_registration": "",
+      "cu_event_secondary_button": "",
+      "cu_event_contact_name": "",
+      "cu_event_email": "isso@carleton.ca",
+      "cu_event_phone": "",
+      "cu_post_thumbnail": ""
+    }
+  ]
+}

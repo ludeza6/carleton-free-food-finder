@@ -14,8 +14,8 @@ function normalizeText(value: string) {
   return value.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// Prepared for future cross-source matching; deliberately not used to drop
-// events or as a database key. Similar events may still be distinct occurrences.
+// Shared cross-source identity component; room and source checks are applied
+// separately. This is not a database key.
 export function createEventFingerprint(
   event: Pick<CollectedEvent, "title" | "startTime" | "building">,
 ): string {
@@ -33,4 +33,23 @@ export function createEventFingerprint(
     normalizedStart,
     normalizeText(event.building ?? ""),
   ]);
+}
+
+// Deliberately conservative: no fuzzy title/location matching or unzoned dates.
+export function isCrossSourceDuplicate(a: CollectedEvent, b: CollectedEvent): boolean {
+  return a.sourceName !== b.sourceName &&
+    a.sourceName.startsWith("Carleton ") && b.sourceName.startsWith("Carleton ") &&
+    Boolean(a.building?.trim() && b.building?.trim()) &&
+    [a, b].every((event) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(event.startTime) &&
+      Number.isFinite(Date.parse(event.startTime))) &&
+    createEventFingerprint(a) === createEventFingerprint(b) &&
+    normalizeText(a.room ?? "") === normalizeText(b.room ?? "");
+}
+
+export function deduplicateCarletonEvents(events: readonly CollectedEvent[]): CollectedEvent[] {
+  const unique: CollectedEvent[] = [];
+  for (const event of deduplicateEventsBySourceUrl(events)) {
+    if (!unique.some((prior) => isCrossSourceDuplicate(prior, event))) unique.push(event);
+  }
+  return unique;
 }

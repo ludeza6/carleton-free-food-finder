@@ -259,10 +259,23 @@ logs each outcome, and merges successful results. Empty successful feeds are
 valid; the run fails only when every configured source fails.
 
 Collection retains three attempts, a 15-second timeout per request, and
-2-second / 4-second retry delays. Results are deduplicated by exact `sourceUrl`,
-with the last configured source winning. `createEventFingerprint` normalizes
-title, start time, and building for future matching; it does not deduplicate
-records today. Database upserts still use the existing `source_url` constraint.
+2-second / 4-second retry delays. Exact `sourceUrl` duplicates use the last
+configured source. Cross-source Carleton duplicates additionally match normalized
+title, explicitly zoned start time, nonempty building, and room; these preserve
+the first configured source. Ingestion also checks previously stored events before
+upserting. Matching is conservative and does not infer title or location aliases.
+
+Engineering & Design is registered alongside the three existing feeds. It uses
+the site's advertised WordPress calendar JSON for discovery, times, and locations,
+and REST event details for descriptions. See
+[the verified endpoints and field mapping](collectors/carleton/sources/SOURCE.md).
+Run `npm run collector:unit` for deterministic fixture and error-handling tests.
+
+Student Experience Office is also registered, using the advertised calendar and
+event REST endpoints linked from `https://carleton.ca/seo/events/`. It shares the
+WordPress JSON collector with Engineering & Design, including Toronto timezone
+handling, retries, and cross-source deduplication. See
+[Student Experience source discovery](collectors/carleton/sources/STUDENT-EXPERIENCE-SOURCE.md).
 
 To add a source later, implement `EventSource` and register it in
 `carletonSources`. Ingestion and deterministic food classification stay shared.
@@ -372,3 +385,7 @@ Built by Lucas De la Cruz Zanabria
 
 Systems and Computer Engineering
 Carleton University
+The Global Opportunities & International Student Services Office collector uses
+verified WordPress JSON endpoints linked from `https://carleton.ca/go-isso/events/`.
+It shares the calendar collector's timezone handling, retries, and duplicate
+checks. See [GO-ISSO source discovery](collectors/carleton/sources/GO-ISSO-SOURCE.md).

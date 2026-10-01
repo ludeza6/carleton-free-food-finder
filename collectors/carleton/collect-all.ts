@@ -1,12 +1,17 @@
 import type { CollectedEvent, EventSource } from "../types";
-import { deduplicateEventsBySourceUrl } from "../deduplication";
+import { deduplicateCarletonEvents } from "../deduplication";
 import { currentStudentsSources } from "./sources/current-students";
 import { engineeringDesignSource } from "./sources/engineering-design";
+
+import { goIssoSource } from "./sources/go-isso";
+import { studentExperienceSource } from "./sources/student-experience";
 
 // Register additional independent Carleton sources here.
 export const carletonSources: readonly EventSource[] = [
   ...currentStudentsSources,
   engineeringDesignSource,
+  studentExperienceSource,
+  goIssoSource,
 ];
 
 export async function collectAllCarletonEvents(
@@ -39,5 +44,5 @@ export async function collectAllCarletonEvents(
     throw new Error("All Carleton event sources failed. No ingestion performed.");
   }
 
-  return deduplicateEventsBySourceUrl(events);
+  return deduplicateCarletonEvents(events);
 }

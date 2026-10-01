@@ -1,0 +1,43 @@
+{
+  "pagination": {
+    "total": 1,
+    "per_page": -1,
+    "current_page": 1,
+    "total_pages": 0
+  },
+  "posts": [
+    {
+      "id": 44419,
+      "title": "FED Pride: Meet and Treat",
+      "link": "https://carleton.ca/engineering-design/event/fed-pride-meet-and-treat/",
+      "cu_event_start_date": "2026-10-14 11:30:00",
+      "cu_event_end_date": "2026-10-14 13:30:00",
+      "cu_event_location_type": {
+        "value": "in-person",
+        "label": "In-Person"
+      },
+      "cu_event_meeting_address_type": {
+        "value": "on-campus",
+        "label": "On Campus"
+      },
+      "cu_building": {
+        "value": "ME",
+        "label": "Mackenzie"
+      },
+      "cu_event_meeting_room": "EDC Atrium",
+      "cu_event_meeting_address_full": null,
+      "cu_event_meeting_address_street": null,
+      "cu_event_meeting_address_city": null,
+      "cu_event_meeting_address_country": null,
+      "cu_event_virtual_type": null,
+      "cu_event_virtual_meeting_link": null,
+      "cu_event_cost": "",
+      "cu_event_registration": "",
+      "cu_event_secondary_button": "",
+      "cu_event_contact_name": "",
+      "cu_event_email": "",
+      "cu_event_phone": "",
+      "cu_post_thumbnail": ""
+    }
+  ]
+}
