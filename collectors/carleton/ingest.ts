@@ -1,3 +1,4 @@
+import { notifyPendingEvents } from "@/lib/notifications/notify-events";
 import { collectAllCarletonEvents } from "./collect-all";
 import { isCrossSourceDuplicate } from "../deduplication";
 import type { CollectedEvent } from "../types";
@@ -20,7 +21,10 @@ export async function ingestCarletonFoodEvents() {
   console.log(`Collected ${events.length} total events`);
   console.log(`Detected ${freeFoodEvents.length} free food events`);
 
+  const supabase = createAdminClient();
+
   if (freeFoodEvents.length === 0) {
+    await notifyPendingEvents(supabase);
     return {
       collected: events.length,
       detected: 0,
@@ -47,8 +51,6 @@ export async function ingestCarletonFoodEvents() {
 
     confidence: classification.confidence,
   }));
-
-  const supabase = createAdminClient();
 
   // Match prior runs too, including when the original source is unavailable.
   const timestamps = freeFoodEvents.map(({ event }) => Date.parse(event.startTime));
@@ -79,6 +81,7 @@ export async function ingestCarletonFoodEvents() {
     isCrossSourceDuplicate(stored, freeFoodEvents[index].event),
   ));
   if (uniqueRows.length === 0) {
+    await notifyPendingEvents(supabase);
     return { collected: events.length, detected: freeFoodEvents.length, stored: 0, events: [] };
   }
 
@@ -94,6 +97,8 @@ export async function ingestCarletonFoodEvents() {
   if (error) {
     throw new Error(`Failed to store food events: ${error.message}`);
   }
+
+  await notifyPendingEvents(supabase);
 
   return {
     collected: events.length,

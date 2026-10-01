@@ -64,6 +64,7 @@ Rule-based food classifier
 Supabase
         ↓
 Next.js / Vercel frontend
+```
 
 Events are upserted using their source URL to avoid duplicate records.
 
@@ -389,3 +390,48 @@ The Global Opportunities & International Student Services Office collector uses
 verified WordPress JSON endpoints linked from `https://carleton.ca/go-isso/events/`.
 It shares the calendar collector's timezone handling, retries, and duplicate
 checks. See [GO-ISSO source discovery](collectors/carleton/sources/GO-ISSO-SOURCE.md).
+
+
+## Owner email alerts
+
+Official free-food events can send an HTML and plain-text alert to one owner
+using Resend. Community reports do not send email; there is no public subscription UI.
+
+1. Apply `supabase/migrations/20261001143616_add_event_email_notifications.sql`
+   in the Supabase SQL editor before enabling alerts. It adds nullable `notified_at`
+   without changing existing notification values.
+2. Create a [Resend API key](https://resend.com/api-keys) and
+   [verify your sending domain](https://resend.com/docs/dashboard/domains/introduction).
+3. Set these in `.env.local` for local ingestion and as GitHub Actions repository
+   secrets for scheduled ingestion:
+
+   ```dotenv
+   RESEND_API_KEY=re_your_key
+   CF3_ALERT_EMAIL=owner@example.com
+   CF3_FROM_EMAIL=CF3 <alerts@your-verified-domain.com>
+   ```
+
+   These are server-only variables. Never use a `NEXT_PUBLIC_` prefix for
+   `RESEND_API_KEY`. The helper uses `server-only` to reject browser imports.
+   If ingestion later runs on Vercel, configure the same server environment there.
+4. Run `npm run collector:ingest`. This command enables Node's `react-server`
+   condition for the server-only guard outside Next.js.
+
+Alerts run after successful upserts and retry pending official events even when
+those events disappear from a feed. Only free events with `notified_at IS NULL`
+and a future start time qualify; already-started and expired events are skipped.
+On first enablement, existing future events with null `notified_at` also qualify.
+Missing email settings disable alerts without stopping ingestion. Send failures
+are logged and leave the timestamp null for a later attempt. A successful Resend
+acceptance sets `notified_at`; it does not guarantee inbox delivery.
+
+Completed timestamps prevent repeat sends. Stable event-ID idempotency keys also
+protect concurrent sends and retries within [Resend's 24-hour retention window](https://resend.com/docs/dashboard/emails/idempotency-keys).
+The scheduled workflow serializes ingestion runs. If Resend accepts a message but
+the database update fails, restore the database and retry within 24 hours; beyond
+that window a duplicate is possible. If event contents change during a retry,
+Resend may reject the reused key until it expires. Check provider logs before
+manually retrying an ambiguous delivery. Database writes and external email sends
+cannot be committed atomically.
+
+Run `npm run test:notifications` for offline notification tests.
