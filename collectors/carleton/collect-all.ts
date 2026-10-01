@@ -1,10 +1,12 @@
 import type { CollectedEvent, EventSource } from "../types";
 import { deduplicateEventsBySourceUrl } from "../deduplication";
 import { currentStudentsSources } from "./sources/current-students";
+import { engineeringDesignSource } from "./sources/engineering-design";
 
 // Register additional independent Carleton sources here.
 export const carletonSources: readonly EventSource[] = [
   ...currentStudentsSources,
+  engineeringDesignSource,
 ];
 
 export async function collectAllCarletonEvents(
