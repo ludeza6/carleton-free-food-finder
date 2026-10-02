@@ -1,6 +1,6 @@
 # Student Experience Office
 
-Verified 2026-10-01. The supplied https://carleton.ca/seo/events/ page identifies
+Verified 2026-10-02. The supplied https://carleton.ca/seo/events/ page identifies
 itself as the Student Experience Office, so the source name is
 `Carleton Student Experience Office`.
 
@@ -33,5 +33,10 @@ The shared WordPress calendar collector checks total record count, retries faile
 requests three times with 15-second timeouts and 2/4-second delays, limits detail
 concurrency to four, and retains successful details after partial failures.
 Existing collection and persistence duplicate checks apply: exact URLs plus
-conservative cross-source matches on normalized title, zoned start, building,
-and room. Differently worded titles or location aliases are not fuzzy-matched.
+conservative cross-source matches on normalized title, zoned start and building.
+Differently worded titles or location aliases are not fuzzy-matched.
+
+Cross-source identity excludes room: different publications can omit or describe
+it differently. Events with the same normalized title, start instant and building
+are one occurrence even when rooms differ. Missing buildings and unzoned start
+times remain excluded from cross-source matching.

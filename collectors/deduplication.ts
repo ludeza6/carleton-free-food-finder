@@ -14,8 +14,9 @@ function normalizeText(value: string) {
   return value.normalize("NFKC").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// Shared cross-source identity component; room and source checks are applied
-// separately. This is not a database key.
+// Shared cross-source identity component; source checks are applied separately.
+// Room is intentionally excluded: publications can omit it or describe it
+// differently. This is not a database key.
 export function createEventFingerprint(
   event: Pick<CollectedEvent, "title" | "startTime" | "building">,
 ): string {
@@ -42,8 +43,7 @@ export function isCrossSourceDuplicate(a: CollectedEvent, b: CollectedEvent): bo
     Boolean(a.building?.trim() && b.building?.trim()) &&
     [a, b].every((event) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(event.startTime) &&
       Number.isFinite(Date.parse(event.startTime))) &&
-    createEventFingerprint(a) === createEventFingerprint(b) &&
-    normalizeText(a.room ?? "") === normalizeText(b.room ?? "");
+    createEventFingerprint(a) === createEventFingerprint(b);
 }
 
 export function deduplicateCarletonEvents(events: readonly CollectedEvent[]): CollectedEvent[] {

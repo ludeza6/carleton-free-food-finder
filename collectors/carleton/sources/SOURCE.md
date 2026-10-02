@@ -35,9 +35,14 @@ network behavior and descriptions are tested with deterministic synthetic data.
 
 Exact source URLs retain existing last-source-wins behavior and database upserts.
 Different Carleton sources also match on normalized title, explicitly zoned start
-instant, nonempty building and room. First configured source wins. Ingestion
+instant and nonempty building. First configured source wins. Ingestion
 checks persisted events in the collected time window, with pagination, and skips
 cross-source matches. This is intentionally conservative: changed titles,
 location aliases, missing locations, and unzoned dates are not fuzzy-matched.
 Concurrent ingestion runs should remain serialized (the existing scheduled job);
 only source URL uniqueness is enforced by the database.
+
+Cross-source identity excludes room: different publications can omit or describe
+it differently. Events with the same normalized title, start instant and building
+are one occurrence even when rooms differ. Missing buildings and unzoned start
+times remain excluded from cross-source matching.

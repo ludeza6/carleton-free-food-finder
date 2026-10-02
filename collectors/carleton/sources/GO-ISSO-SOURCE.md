@@ -1,6 +1,6 @@
 # Global Opportunities & International Student Services Office
 
-Verified 2026-10-01 from https://carleton.ca/go-isso/events/. The page title and
+Verified 2026-10-02 from https://carleton.ca/go-isso/events/. The page title and
 WebSite JSON-LD identify this office, rather than Engineering & Design.
 `sourceName` is `Carleton Global Opportunities & International Student Services Office`.
 
@@ -33,9 +33,14 @@ discovery and separate location fields. No HTML page scraping is needed.
 The shared collector provides 15-second request timeouts, three attempts with
 2/4-second retry delays, four concurrent detail requests, and partial-failure
 isolation. Existing collection and stored-event duplicate checks apply (exact
-URLs plus conservative cross-source title/start/building/room matching).
+URLs plus conservative cross-source title/start/building matching).
 Different title/location wording is not fuzzy-matched.
 
 Fixtures retain public Global Café and virtual work-permit calendar records.
 The description fixture preserves the public narrative while replacing generated
 registration scripts/forms with minimal representative markup.
+
+Cross-source identity excludes room: different publications can omit or describe
+it differently. Events with the same normalized title, start instant and building
+are one occurrence even when rooms differ. Missing buildings and unzoned start
+times remain excluded from cross-source matching.

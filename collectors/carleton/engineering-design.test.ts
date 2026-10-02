@@ -77,7 +77,10 @@ test("cross-source matching works for prior stored events and keeps distinct occ
   const prior = { ...parsed, sourceName: "Carleton Current Students", sourceUrl: "https://students.carleton.ca/events/pride/", startTime: "2026-10-14T11:30:00-04:00", title: " FED PRIDE: Meet and Treat " };
   assert.equal(isCrossSourceDuplicate(prior, parsed), true);
   assert.deepEqual(deduplicateCarletonEvents([prior, parsed]), [prior]);
-  for (const change of [{ room: "Other" }, { building: null }, { startTime: "2026-10-15T15:30:00Z" }, { startTime: "2026-10-14T11:30:00" }, { sourceName: prior.sourceName }]) {
+  for (const room of [null, "Other", "TBD"]) {
+    assert.equal(isCrossSourceDuplicate(prior, { ...parsed, room }), true);
+  }
+  for (const change of [{ building: null }, { startTime: "2026-10-15T15:30:00Z" }, { startTime: "2026-10-14T11:30:00" }, { sourceName: prior.sourceName }]) {
     assert.equal(isCrossSourceDuplicate(prior, { ...parsed, ...change }), false);
   }
 });
