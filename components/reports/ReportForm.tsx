@@ -24,6 +24,8 @@ export default function ReportForm() {
     setQuantity,
   ] = useState("some");
 
+  const [website, setWebsite] = useState("");
+
   const [notes, setNotes] =
     useState("");
 
@@ -60,14 +62,14 @@ export default function ReportForm() {
             foodType,
           quantity,
           notes,
+          website,
         }),
       },
     );
 
     if (!response.ok) {
-      setMessage(
-        "Could not submit report.",
-      );
+      const body = await response.json().catch(() => null);
+      setMessage(body?.error || "Could not submit report.");
 
       setSubmitting(false);
       return;
@@ -93,6 +95,12 @@ export default function ReportForm() {
       onSubmit={handleSubmit}
       className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-5 lg:sticky lg:top-6"
     >
+      <div hidden aria-hidden="true">
+        <label>
+          Website
+          <input name="website" value={website} onChange={(event) => setWebsite(event.target.value)} tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
       <div className="mb-5">
         <h3 className="text-lg font-semibold text-zinc-100">
           Spot free food?

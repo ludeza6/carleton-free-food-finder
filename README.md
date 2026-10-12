@@ -435,3 +435,46 @@ manually retrying an ambiguous delivery. Database writes and external email send
 cannot be committed atomically.
 
 Run `npm run test:notifications` for offline notification tests.
+
+### Anonymous community report protection
+
+Before deploying the report API, run `supabase/report-abuse-protection.sql` once
+in the Supabase SQL editor. This creates the private `report_rate_limits` table
+and service-role-only `submit_community_report` function. Set
+`REPORT_RATE_LIMIT_SALT` to a long random server-only secret (for example, generate
+one with `openssl rand -hex 32`). Keep the same secret across server instances;
+rotating it resets the association with existing rate-limit records.
+
+POST uses the existing admin client to call a transaction that locks the IP hash,
+checks rolling limits of 3 successful reports per 15 minutes and 10 per 24 hours,
+and inserts the report and quota record together. Failed submissions consume no
+quota. Records older than 24 hours are pruned during successful submissions.
+GET remains public/read-only. No account or paid service is required.
+
+The server validates the first `x-forwarded-for` address (falling back to
+`x-real-ip` only when the forwarded header is absent), normalizes IPv6 and
+IPv4-mapped IPv6, and hashes `salt + NUL + normalized IP` with SHA-256. Only the
+hash is stored in the private limiter table; neither the IP nor hash is added to
+the report or browser response. Missing salt or invalid/missing IP fails closed
+with HTTP 503. Deploy only behind a trusted proxy that **overwrites** these
+headers; accepting arbitrary client-supplied forwarding headers permits bypass.
+People sharing a public IP share the quota.
+
+The SQL script enables RLS and revokes INSERT on `food_reports` from `PUBLIC`,
+`anon`, and `authenticated`, blocking direct public inserts even if a permissive
+policy still exists. In Supabase's policy editor, also remove INSERT policies
+for these roles (and review any `ALL` policy). To remove a named INSERT policy:
+
+```sql
+drop policy if exists "YOUR_PUBLIC_INSERT_POLICY" on public.food_reports;
+```
+
+Preserve public SELECT policies. If an `ALL` policy supplies read access, replace
+it with a SELECT-only policy rather than removing needed read access. The script
+also revokes all public access to the limiter table and RPC. This follows
+[Supabase's RLS and privilege model](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+Run `npm run test:reports` for validation/hashing tests and database SQL tests.
+The database tests use an ephemeral PostgreSQL engine with a minimal report
+schema and do not read credentials or connect to production. The SQL assertions
+are in `supabase/tests/report-abuse-protection.sql` and roll back their changes.
