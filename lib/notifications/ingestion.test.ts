@@ -73,3 +73,52 @@ test("SEO and GO-ISSO free food flows through ingestion and alerts; stored cross
   assert.equal(upserts, 1);
   assert.equal(emails.length, 2);
 });
+
+test("social ingestion isolates account failures and suppresses persisted duplicates without repeat email", async (t) => {
+  const originalEnv = { ...process.env };
+  t.after(() => { process.env = originalEnv; });
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://social-test.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "test-key";
+  process.env.RESEND_API_KEY = "re_test";
+  process.env.CF3_ALERT_EMAIL = "owner@example.com";
+  process.env.CF3_FROM_EMAIL = "CF3 <alerts@example.com>";
+  t.mock.method(console, "log", () => {});
+  t.mock.method(console, "error", () => {});
+  const rows: Record<string, unknown>[] = [];
+  let emails = 0;
+  let upserts = 0;
+  t.mock.method(globalThis, "fetch", async (input: string | URL | Request, init?: RequestInit) => {
+    const url = new URL(String(input));
+    if (url.hostname === "api.resend.com") { emails++; return Response.json({ id: "email" }); }
+    assert.equal(url.hostname, "social-test.supabase.co");
+    if (init?.method === "POST") {
+      upserts++;
+      for (const row of JSON.parse(String(init.body))) {
+        const existing = rows.find((stored) => stored.source_url === row.source_url);
+        if (existing) Object.assign(existing, row);
+        else rows.push({ ...row, id: "event-1", notified_at: null });
+      }
+      return Response.json(rows);
+    }
+    if (init?.method === "PATCH") { Object.assign(rows[0], JSON.parse(String(init.body))); return Response.json(rows); }
+    if (url.searchParams.has("notified_at")) return Response.json(rows.filter((row) => row.notified_at === null));
+    if (url.searchParams.has("id")) return Response.json(rows[0]);
+    return Response.json(rows);
+  });
+  const { ingestCarletonFoodEvents } = await import("../../collectors/carleton/ingest");
+  const { collectAllEventSources } = await import("../../collectors/collect-all");
+  const event = { title: "Pizza meetup", description: "Free pizza", startTime: "2099-10-13T17:00:00Z", endTime: null, building: "University Centre", room: null, sourceName: "Bluesky @example.test", sourceUrl: "https://bsky.app/profile/did:plc:example/post/abc" };
+  const collect = () => collectAllEventSources([], [
+    { name: "Failed account", collect: async () => { throw new Error("Offline"); } },
+    { name: event.sourceName, collect: async () => [event] },
+  ]);
+  assert.equal((await ingestCarletonFoodEvents(collect)).stored, 1);
+  assert.equal(emails, 1);
+  await ingestCarletonFoodEvents(collect); // Exact URL upsert preserves notified_at.
+  assert.equal(emails, 1);
+  rows[0].source_name = "Carleton Current Students";
+  rows[0].source_url = "https://students.carleton.ca/events/pizza/";
+  assert.equal((await ingestCarletonFoodEvents(collect)).stored, 0);
+  assert.equal(upserts, 2);
+  assert.equal(emails, 1);
+});

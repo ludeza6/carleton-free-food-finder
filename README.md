@@ -478,3 +478,50 @@ Run `npm run test:reports` for validation/hashing tests and database SQL tests.
 The database tests use an ephemeral PostgreSQL engine with a minimal report
 schema and do not read credentials or connect to production. The SQL assertions
 are in `supabase/tests/report-abuse-protection.sql` and roll back their changes.
+
+## Social Event Discovery
+
+CF3 supports curated public Bluesky accounts alongside the official Carleton
+collectors. Add verified handles to `collectors/social/accounts.ts` in the
+`bluesky` array. It is intentionally empty until accounts are verified. Public
+reads use `public.api.bsky.app` without credentials; no new environment variables,
+paid AI APIs, services, database tables, or migrations are required.
+
+Instagram and Facebook are not ingested yet. Authenticated scraping and personal
+account login are intentionally avoided to keep discovery maintainable and avoid
+handling personal credentials. Future sources should use official public APIs or
+feeds and implement the existing `EventSource` interface.
+
+Bluesky collection uses 15-second request timeouts, up to three attempts, and
+independent account failure handling. It inspects at most five pages of 100 posts
+per account and only considers posts published in the last seven days. Reposts
+and replies are ignored. Links lead to human-viewable Bluesky posts using stable
+account DIDs. API definition: [Bluesky author feed](https://github.com/bluesky-social/atproto/blob/main/lexicons/app/bsky/feed/getAuthorFeed.json).
+
+Extraction reuses the existing food classifier and deterministic text rules:
+`today`, `tomorrow`, unqualified weekday names, `Oct 15`/`October 15` (optionally
+with a year), `1 PM`, `1:30pm`, and ascending ranges such as `1-3 PM`. Relative
+dates use the publication day in America/Toronto; unqualified weekdays mean the
+same or next occurrence. Month/day dates without a year use the publication year,
+without guessing a year rollover. Toronto daylight-saving gaps and repeated
+wall-clock times are rejected. Only events starting within the last 24 hours or
+next 366 days are accepted. Multiple dates/times, numeric dates, qualified
+weekdays, invalid times, and missing dates/times are skipped with a logged reason.
+Known building names and explicit `room 123` mentions are extracted; location
+coverage is intentionally limited. Images, OCR, links and embedded event pages
+are not parsed.
+
+Social candidates flow through the shared classifier, deduplication, Supabase
+`food_events` upsert and existing email notification behavior. Exact URLs
+participate in existing uniqueness handling. Cross-source duplicates require an
+exact normalized title, zoned start instant and nonempty building match; official
+sources take precedence within a run. Titles use the first line or sentence of
+the post. Different titles or missing locations may prevent matching; there is no
+fuzzy matching. Existing `notified_at` values are preserved on exact-URL upserts.
+The existing official-source failure policy and GitHub Actions command remain in
+place; social failures alone do not abort ingestion.
+
+Run `npm run social:test` for a developer-only preview. It prints extracted events
+and skip reasons without connecting to Supabase or sending email, and exits
+cleanly if no accounts are configured. Run `npm run test:social` for mocked unit
+tests; ingestion/email coverage is also included in `npm run test:notifications`.

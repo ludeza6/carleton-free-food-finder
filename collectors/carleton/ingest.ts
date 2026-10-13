@@ -1,14 +1,17 @@
 import { notifyPendingEvents } from "@/lib/notifications/notify-events";
-import { collectAllCarletonEvents } from "./collect-all";
-import { isCrossSourceDuplicate } from "../deduplication";
+import { collectAllEventSources } from "../collect-all";
+import { deduplicateEvents, isCrossSourceDuplicate } from "../deduplication";
 import type { CollectedEvent } from "../types";
 import { classifyFoodEvent } from "../food-detector";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function ingestCarletonFoodEvents() {
-  const events = await collectAllCarletonEvents();
+export async function ingestCarletonFoodEvents(collect = collectAllEventSources) {
+  const events = await collect();
 
-  const classifiedEvents = events.map((event) => ({
+  const classifiedEvents = deduplicateEvents(events.filter((event) => {
+    const food = classifyFoodEvent(event);
+    return food.hasFood && food.isFree;
+  })).map((event) => ({
     event,
     classification: classifyFoodEvent(event),
   }));

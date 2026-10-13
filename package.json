@@ -10,7 +10,9 @@
     "collector:test": "tsx scripts/test-current-students-collector.ts",
     "collector:ingest": "node --conditions=react-server --import tsx scripts/ingest-current-students.ts",
     "test:notifications": "node --conditions=react-server --import tsx --test lib/notifications/*.test.ts",
-    "test:reports": "node --conditions=react-server --import tsx --test lib/reports/*.test.ts"
+    "test:reports": "node --conditions=react-server --import tsx --test lib/reports/*.test.ts",
+    "test:social": "node --import tsx --test collectors/social/*.test.ts",
+    "social:test": "node --import tsx scripts/test-social-collector.ts"
   },
   "dependencies": {
     "@radix-ui/react-checkbox": "^1.3.1",

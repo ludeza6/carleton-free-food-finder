@@ -39,7 +39,7 @@ export function createEventFingerprint(
 // Deliberately conservative: no fuzzy title/location matching or unzoned dates.
 export function isCrossSourceDuplicate(a: CollectedEvent, b: CollectedEvent): boolean {
   return a.sourceName !== b.sourceName &&
-    a.sourceName.startsWith("Carleton ") && b.sourceName.startsWith("Carleton ") &&
+    [a, b].every((event) => event.sourceName.startsWith("Carleton ") || event.sourceName.startsWith("Bluesky @")) &&
     Boolean(a.building?.trim() && b.building?.trim()) &&
     [a, b].every((event) => /(?:Z|[+-]\d{2}:?\d{2})$/i.test(event.startTime) &&
       Number.isFinite(Date.parse(event.startTime))) &&
@@ -53,3 +53,6 @@ export function deduplicateCarletonEvents(events: readonly CollectedEvent[]): Co
   }
   return unique;
 }
+
+// Generic name; retain the original export for official-source callers.
+export const deduplicateEvents = deduplicateCarletonEvents;
