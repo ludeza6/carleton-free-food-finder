@@ -28,7 +28,29 @@ jobs:
         run: npm ci
 
       - name: Ingest Carleton events
-        run: npm run collector:ingest
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            echo "Ingestion attempt ${attempt}/3"
+            if npm run collector:ingest; then
+              exit 0
+            else
+              status=$?
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Ingestion failed after 3 attempts (exit code ${status})"
+              exit "$status"
+            fi
+
+            if [ "$attempt" -eq 1 ]; then
+              delay=60
+            else
+              delay=180
+            fi
+            echo "Retrying in ${delay} seconds"
+            sleep "$delay"
+          done
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
