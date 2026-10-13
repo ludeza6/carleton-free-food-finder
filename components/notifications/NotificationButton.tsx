@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type NotificationState =
   | "unsupported"
@@ -8,32 +8,30 @@ type NotificationState =
   | "granted"
   | "denied";
 
+function getInitialPermission(): NotificationState {
+  if (typeof window === "undefined") {
+    return "default";
+  }
+
+  if (!("Notification" in window)) {
+    return "unsupported";
+  }
+
+  return Notification.permission as NotificationState;
+}
+
 export default function NotificationButton() {
   const [permission, setPermission] =
-    useState<NotificationState>("default");
-
-  useEffect(() => {
-    if (!("Notification" in window)) {
-      setPermission("unsupported");
-      return;
-    }
-
-    setPermission(
-      Notification.permission as NotificationState,
-    );
-  }, []);
+    useState<NotificationState>(getInitialPermission);
 
   async function enableNotifications() {
     if (!("Notification" in window)) {
       return;
     }
 
-    const result =
-      await Notification.requestPermission();
+    const result = await Notification.requestPermission();
 
-    setPermission(
-      result as NotificationState,
-    );
+    setPermission(result as NotificationState);
   }
 
   if (permission === "unsupported") {

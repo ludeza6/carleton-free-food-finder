@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  useEffect,
   useState,
 } from "react";
 import { FoodReport } from "@/types/report";
@@ -91,17 +90,17 @@ export default function ReportCard({
     setSubmitting,
   ] = useState(false);
 
-  const [voted, setVoted] =
-    useState(false);
+  const [voted, setVoted] = useState(() => {
+  if (typeof window === "undefined") {
+    return false;
+  }
 
-  useEffect(() => {
-    const hasVoted =
-      localStorage.getItem(
-        `cf3-report-vote-${report.id}`,
-      ) === "true";
-
-    setVoted(hasVoted);
-  }, [report.id]);
+  return (
+    localStorage.getItem(
+      `cf3-report-vote-${report.id}`,
+    ) === "true"
+  );
+});
 
   const survival =
     calculateSurvivalScore(
