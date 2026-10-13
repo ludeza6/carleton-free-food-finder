@@ -483,8 +483,9 @@ are in `supabase/tests/report-abuse-protection.sql` and roll back their changes.
 
 CF3 supports curated public Bluesky accounts alongside the official Carleton
 collectors. Add verified handles to `collectors/social/accounts.ts` in the
-`bluesky` array. It is intentionally empty until accounts are verified. Public
-reads use `public.api.bsky.app` without credentials; no new environment variables,
+`bluesky` array. Keep the list limited to verified public Carleton organization,
+department, program or student-facing handles that are likely to announce campus
+events. Public reads use `public.api.bsky.app` without credentials; no new environment variables,
 paid AI APIs, services, database tables, or migrations are required.
 
 Instagram and Facebook are not ingested yet. Authenticated scraping and personal
